@@ -1,0 +1,17 @@
+# ==================================
+# b2upload B2 图床上传工具配置文件
+# ==================================
+
+# 必须字段：Key ID 和 Application Key，用冒号分隔
+token = "YOUR_KEY_ID:YOUR_APPLICATION_KEY" 
+# 目标 Bucket
+bucket = "your-target-bucket-name"
+# 默认 tag 的 URL
+baseurl = "https://f004.backblazeb2.com/file"
+# 默认 Tag
+tag.default = "tag1"
+
+# Tag 配置1
+[tag.tag1]
+username = "your-username" # 用户名，其实就是要存的目录
+url = "https://domain.com" # 不带后/
