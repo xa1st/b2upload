@@ -8,10 +8,8 @@ token = "YOUR_KEY_ID:YOUR_APPLICATION_KEY"
 bucket = "your-target-bucket-name"
 # 默认 tag 的 URL
 baseurl = "https://f004.backblazeb2.com/file"
-# 默认 Tag
-tag.default = "tag1"
 
-# Tag 配置1
-[tag.tag1]
+# 标签名称，比如现在就是 b2upload custom xxx.jpg
+[tags.custom]
 username = "your-username" # 用户名，其实就是要存的目录
 url = "https://domain.com" # 不带后/
