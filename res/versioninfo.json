@@ -1,0 +1,22 @@
+{
+    "FixedFileInfo": {
+        "FileFlagsMask": "3f",
+        "FileOS":        "40004",
+        "FileType":      "1",
+        "FileVersion":   {"Major": 1, "Minor": 1, "Patch": 0, "Build": 0},
+        "ProductVersion": {"Major": 1, "Minor": 1, "Patch": 0, "Build": 0}
+    },
+    
+    "StringFileInfo": {
+        "Company":      "猫东东 https://bsay.de",
+        "FileDescription":  "B2图床上传工具",
+        "FileVersion":      "1.1.1.0",
+        "InternalName":     "b2upload.exe",
+        "LegalCopyright":   "猫东东 Copyright (C) 2025",
+        "OriginalFilename": "b2upload.exe",
+        "ProductName":      "图床上传工具",
+        "ProductVersion":   "1.1.1.0"
+    },
+
+    "Charset": 936
+}

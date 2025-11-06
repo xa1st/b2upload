@@ -39,13 +39,14 @@ func GetFileExt(filePath string) string {
 // GenerateRemotePath 生成 Backblaze B2 期望的远程文件路径
 // 格式：[用户名]/[当前年份4位]/[当前月日]/[16位md5(文件名)].[扩展名]
 func GenerateRemotePath(localFile, user string) (string, error) {
-	ext := "." + GetFileExt(localFile)
-	fileName := filepath.Base(localFile)
-
-	// 计算 MD5
-	hashData := []byte(fileName)
-	hash := md5.Sum(hashData)
+	// 计算文件的md5
+	hash, error := CalculateFileMD5(localFile)
+	if error != nil {
+		return "", error
+	}
 	hashStr := fmt.Sprintf("%x", hash)[:16] // 取前16位
+	// 取扩展名
+	ext := "." + GetFileExt(localFile)
 	// 获取当前时间信息
 	now := time.Now()
 	year := now.Format("2006")

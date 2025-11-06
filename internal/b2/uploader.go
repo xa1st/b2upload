@@ -100,33 +100,33 @@ func NewUploader(cfg *config.Config) *Uploader {
 
 // AuthorizeAccount 执行 B2 授权流程 (保持不变)
 func (u *Uploader) AuthorizeAccount() error {
-	fmt.Println("-> 正在进行 B2 授权...")
+	fmt.Println("正在进行 B2 授权...")
 	// B2 认证需要 Basic Auth，将 keyId:key 进行 Base64 编码
 	authString := base64.StdEncoding.EncodeToString([]byte(u.Config.Token))
 
 	req, err := http.NewRequest("GET", authorizeURL, nil)
 	if err != nil {
-		return fmt.Errorf("-> 创建授权请求失败: %w", err)
+		return fmt.Errorf("创建授权请求失败: %w", err)
 	}
 
 	req.Header.Add("Authorization", "Basic "+authString)
 
 	resp, err := u.Client.Do(req)
 	if err != nil {
-		return fmt.Errorf("-> B2 授权网络请求失败: %w", err)
+		return fmt.Errorf("B2 授权网络请求失败: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("-> B2 授权失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("B2 授权失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
 	}
 
 	var auth AuthResponse
 	// 读取完整的 Body
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	if err := json.Unmarshal(bodyBytes, &auth); err != nil {
-		return fmt.Errorf("-> 解析 B2 授权响应失败: %w", err)
+		return fmt.Errorf("解析 B2 授权响应失败: %w", err)
 	}
 
 	// ****** 关键修复逻辑：提取 URL 和 Bucket ID ******
@@ -156,29 +156,29 @@ func (u *Uploader) AuthorizeAccount() error {
 	// ********************************************
 
 	if auth.APIURL == "" {
-		return fmt.Errorf("-> B2 授权响应结构异常：未找到 apiUrl 字段。请检查您的 AppKey 权限。原始响应: %s", string(bodyBytes))
+		return fmt.Errorf("B2 授权响应结构异常：未找到 apiUrl 字段。请检查您的 AppKey 权限。原始响应: %s", string(bodyBytes))
 	}
 
 	if auth.BucketIDToUse == "" {
-		return fmt.Errorf("-> B2 授权成功，但未在响应中找到 Bucket ID。请确认您的 App Key 是针对单个 Bucket 创建的，或提供更高级别的 App Key。")
+		return fmt.Errorf("B2 授权成功，但未在响应中找到 Bucket ID。请确认您的 App Key 是针对单个 Bucket 创建的，或提供更高级别的 App Key。")
 	}
 
 	u.Auth = &auth
 
-	fmt.Println("-> B2 API URL 解析成功")
-	fmt.Println("-> B2 Bucket ID 解析成功")
+	fmt.Println("B2 API URL 解析成功")
+	fmt.Println("B2 Bucket ID 解析成功")
 	return nil
 }
 
 // getUploadURL 获取文件上传专用的 URL 和 Token (保持不变)
 func (u *Uploader) getUploadURL() (*UploadURLResponse, error) {
 	if u.Auth == nil {
-		return nil, fmt.Errorf("-> 尚未授权 B2 账户")
+		return nil, fmt.Errorf("尚未授权 B2 账户")
 	}
 
 	bucketID := u.Auth.BucketIDToUse
 	if bucketID == "" {
-		return nil, fmt.Errorf("-> Bucket ID 缺失，无法获取上传 URL。请重新授权。")
+		return nil, fmt.Errorf("Bucket ID 缺失，无法获取上传 URL。请重新授权。")
 	}
 
 	// 构造 b2_get_upload_url 请求体
@@ -190,7 +190,7 @@ func (u *Uploader) getUploadURL() (*UploadURLResponse, error) {
 	url := u.Auth.APIURL + "/b2api/v3/b2_get_upload_url"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, fmt.Errorf("-> 创建获取上传URL请求失败: %w", err)
+		return nil, fmt.Errorf("创建获取上传URL请求失败: %w", err)
 	}
 
 	req.Header.Set("Authorization", u.Auth.AuthorizationToken)
@@ -198,18 +198,18 @@ func (u *Uploader) getUploadURL() (*UploadURLResponse, error) {
 
 	resp, err := u.Client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("-> 获取上传URL网络请求失败: %w", err)
+		return nil, fmt.Errorf("获取上传URL网络请求失败: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("-> 获取上传URL失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("获取上传URL失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
 	}
 
 	var uploadResp UploadURLResponse
 	if err := json.NewDecoder(resp.Body).Decode(&uploadResp); err != nil {
-		return nil, fmt.Errorf("-> 解析上传URL响应失败: %w", err)
+		return nil, fmt.Errorf("解析上传URL响应失败: %w", err)
 	}
 
 	return &uploadResp, nil
@@ -238,7 +238,7 @@ func (u *Uploader) buildPublicURL(remotePath string) string {
 // checkFileExists 检查文件是否已存在于 B2 存储桶中
 func (u *Uploader) checkFileExists(remotePath string) (string, bool, error) {
 	if u.Auth == nil || u.Auth.BucketIDToUse == "" {
-		return "", false, fmt.Errorf("-> 授权信息不完整，无法检查文件存在性")
+		return "", false, fmt.Errorf("授权信息不完整，无法检查文件存在性")
 	}
 
 	// 构造 b2_list_file_names 请求体：只请求一个文件
@@ -251,7 +251,7 @@ func (u *Uploader) checkFileExists(remotePath string) (string, bool, error) {
 	url := u.Auth.APIURL + "/b2api/v3/b2_list_file_names"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return "", false, fmt.Errorf("-> 创建文件列表请求失败: %w", err)
+		return "", false, fmt.Errorf("创建文件列表请求失败: %w", err)
 	}
 
 	req.Header.Set("Authorization", u.Auth.AuthorizationToken)
@@ -259,18 +259,18 @@ func (u *Uploader) checkFileExists(remotePath string) (string, bool, error) {
 
 	resp, err := u.Client.Do(req)
 	if err != nil {
-		return "", false, fmt.Errorf("-> 文件列表网络请求失败: %w", err)
+		return "", false, fmt.Errorf("文件列表网络请求失败: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", false, fmt.Errorf("-> 文件列表请求失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
+		return "", false, fmt.Errorf("文件列表请求失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
 	}
 
 	var listResp ListFileNamesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
-		return "", false, fmt.Errorf("-> 解析文件列表响应失败: %w", err)
+		return "", false, fmt.Errorf("解析文件列表响应失败: %w", err)
 	}
 
 	// 检查返回的文件列表：如果文件列表不为空，且第一个文件的名字就是我们要找的，则文件存在。
@@ -288,7 +288,7 @@ func (u *Uploader) uploadSingleFile(localFilePath, remotePath string, uploadInfo
 	publicURL, exists, err := u.checkFileExists(remotePath)
 	if err != nil {
 		// 如果检查失败，我们选择继续尝试上传，但记录警告
-		fmt.Printf("-> 警告：检查文件存在性失败 (%s)，将尝试上传: %v\n", remotePath, err)
+		fmt.Printf("警告：检查文件存在性失败 (%s)，将尝试上传: %v\n", remotePath, err)
 	}
 	if exists {
 		return publicURL, nil // 文件已存在，直接返回 URL，跳过后续上传流程
@@ -297,13 +297,13 @@ func (u *Uploader) uploadSingleFile(localFilePath, remotePath string, uploadInfo
 	// 2. 准备文件数据和元数据
 	file, err := os.Open(localFilePath)
 	if err != nil {
-		return "", fmt.Errorf("-> 无法打开本地文件 %s: %w", localFilePath, err)
+		return "", fmt.Errorf("无法打开本地文件 %s: %w", localFilePath, err)
 	}
 	defer file.Close()
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return "", fmt.Errorf("-> 无法获取文件信息: %w", err)
+		return "", fmt.Errorf("无法获取文件信息: %w", err)
 	}
 	// 计算 MD5
 	fileMD5, err := util.CalculateFileMD5(localFilePath)
@@ -319,7 +319,7 @@ func (u *Uploader) uploadSingleFile(localFilePath, remotePath string, uploadInfo
 	// 3. 构造 b2_upload_file 请求
 	req, err := http.NewRequest("POST", uploadInfo.UploadURL, file)
 	if err != nil {
-		return "", fmt.Errorf("-> 创建上传请求失败: %w", err)
+		return "", fmt.Errorf("创建上传请求失败: %w", err)
 	}
 
 	// 必须的请求头
@@ -336,14 +336,14 @@ func (u *Uploader) uploadSingleFile(localFilePath, remotePath string, uploadInfo
 	// 4. 执行上传
 	resp, err := u.Client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("-> B2 上传网络请求失败: %w", err)
+		return "", fmt.Errorf("B2 上传网络请求失败: %w", err)
 	}
 	defer resp.Body.Close()
 
 	// 5. 处理响应
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("-> B2 上传失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("B2 上传失败 (状态码: %d), 响应: %s", resp.StatusCode, string(body))
 	}
 
 	// 6. 构造最终的公开 URL
@@ -376,20 +376,20 @@ func (u *Uploader) UploadFiles(filesToUpload []string) []UploadResult {
 
 				// 如果获取 uploadInfo 失败，则直接记录错误
 				if err != nil {
-					result.Error = fmt.Errorf("-> 无法上传，B2 上传 URL 获取失败: %w", err)
+					result.Error = fmt.Errorf("无法上传，B2 上传 URL 获取失败: %w", err)
 					results <- result
 					continue
 				}
 				// 1. 生成远程路径
 				remotePath, pathErr := util.GenerateRemotePath(cleanLocalFile, u.Config.User)
 				if pathErr != nil {
-					result.Error = fmt.Errorf("-> 无法生成远程路径: %w", pathErr)
+					result.Error = fmt.Errorf("无法生成远程路径: %w", pathErr)
 					results <- result
 					continue
 				}
 
 				// 打印上传文件名称和远程路径信息
-				fmt.Printf("-> 准备处理 %s 到 B2 路径: %s\n", filepath.Base(cleanLocalFile), remotePath)
+				fmt.Printf("准备处理 %s 到 B2 路径: %s\n", filepath.Base(cleanLocalFile), remotePath)
 
 				// 2. 执行上传
 				publicURL, uploadErr := u.uploadSingleFile(cleanLocalFile, remotePath, uploadInfo)
